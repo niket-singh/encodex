@@ -3,7 +3,7 @@ from utils.banner import print_banner
 from utils.formats import formats
 from utils.customhelp import CustomHelpAction
 from utils.decodejwt import decode_jwt
-
+from lib.EncodingChain import EncodingChain
 
 def handle_encode(args):
     """Encodes the data using the specified format"""
@@ -30,6 +30,19 @@ def handle_decode(args):
             print(decoder.decode(args.data, url_safe=args.url_safe))
         else:
             print(decoder.decode(args.data))
+
+def handle_chain_encode(args):
+    chain = EncodingChain()
+    for format_name in args.formats:
+        chain.add(format_name)
+    print(chain.encode(args.data))
+
+def handle_chain_decode(args):
+    chain = EncodingChain()
+    for format_name in reversed(args.formats):
+        chain.add(format_name)
+    result = chain.decode(args.data)
+    print(f"Final result: {result}")
 
 
 def show_info(args) -> str:
@@ -76,6 +89,14 @@ def main():
         "--url-safe", action="store_true", help="Use URL-safe Base64 decoding"
     )
 
+    chain_encode_parser = subparsers.add_parser("chain-encode", help="Encode data using multiple formats")
+    chain_encode_parser.add_argument("formats", nargs="+", choices=list(formats.keys()), help="Encoding formats in order")
+    chain_encode_parser.add_argument("data", help="Data to encode")
+
+    chain_decode_parser = subparsers.add_parser("chain-decode", help="Decode data using multiple formats")
+    chain_decode_parser.add_argument("formats", nargs="+", choices=list(formats.keys()), help="Decoding formats in reverse order")
+    chain_decode_parser.add_argument("data", help="Data to decode")
+
     info_parser = subparsers.add_parser("info", help="Get info about encoding format")
     info_parser.add_argument(
         "format",
@@ -98,6 +119,10 @@ def main():
         handle_encode(args)
     elif args.command == "decode":
         handle_decode(args)
+    elif args.command == "chain-encode":
+        handle_chain_encode(args)
+    elif args.command == "chain-decode":
+        handle_chain_decode(args)
     elif args.command == "info":
         show_info(args)
     elif args.command == "list":
